@@ -120,6 +120,7 @@
           <div class="meta" id="tweetMeta"></div>
           <div class="actions">
             <button class="ghost" id="copyBtn">本文をコピー</button>
+            <button class="ghost" id="copyUrlBtn">正規URLをコピー</button>
           </div>
         </div>
       </div>
@@ -141,7 +142,28 @@
       var avatarEl = document.getElementById("avatar");
       var tweetMetaEl = document.getElementById("tweetMeta");
       var copyBtn = document.getElementById("copyBtn");
+      var copyUrlBtn = document.getElementById("copyUrlBtn");
       var currentText = "";
+      var currentUrl = "";
+
+      function copyToClipboard(text, btn, originalLabel) {
+        if (!text) return;
+        var done = function () {
+          btn.textContent = "コピーしました！";
+          setTimeout(function () { btn.textContent = originalLabel; }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done);
+        } else {
+          var ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          ta.remove();
+          done();
+        }
+      }
 
       function extractTweetId(raw) {
         var m = raw.match(/(?:twitter\.com|x\.com)\/(?:#!\/)?[^/]+\/status(?:es)?\/(\d+)/i);
@@ -189,12 +211,13 @@
           })
           .then(function (data) {
             currentText = htmlToText(data.html || "");
+            currentUrl = data.url || ("https://x.com/i/status/" + tweetId);
             var author = data.author_name || "不明なユーザー";
             displayNameEl.textContent = author;
             handleEl.textContent = data.author_url ? "@" + data.author_url.split("/").pop() : "";
             avatarEl.textContent = (author[0] || "?").toUpperCase();
             tweetTextEl.textContent = currentText || "（本文を取得できませんでした）";
-            tweetMetaEl.textContent = "投稿URL: " + data.url;
+            tweetMetaEl.textContent = "正規URL: " + currentUrl;
             resultEl.classList.remove("hidden");
             setStatus("取得しました。", false, false);
           })
@@ -211,22 +234,10 @@
       }
 
       copyBtn.addEventListener("click", function () {
-        if (!currentText) return;
-        var done = function () {
-          copyBtn.textContent = "コピーしました！";
-          setTimeout(function () { copyBtn.textContent = "本文をコピー"; }, 1500);
-        };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(currentText).then(done);
-        } else {
-          var ta = document.createElement("textarea");
-          ta.value = currentText;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand("copy");
-          ta.remove();
-          done();
-        }
+        copyToClipboard(currentText, copyBtn, "本文をコピー");
+      });
+      copyUrlBtn.addEventListener("click", function () {
+        copyToClipboard(currentUrl, copyUrlBtn, "正規URLをコピー");
       });
 
       fetchBtn.addEventListener("click", fetchTweet);
