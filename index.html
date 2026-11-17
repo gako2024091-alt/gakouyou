@@ -1,249 +1,226 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>ツイート本文取得ツール</title>
-    <style>
-      :root {
-        font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif;
-        color: #0f1419;
-        background: #f7f9fa;
-      }
-      * { box-sizing: border-box; }
-      body {
-        margin: 0;
-        min-height: 100vh;
-        background: linear-gradient(180deg, #f7f9fa 0%, #eef3f6 100%);
-        display: flex;
-        justify-content: center;
-        padding: 40px 16px;
-      }
-      main { width: 100%; max-width: 640px; }
-      h1 { font-size: 24px; margin: 0 0 4px; }
-      .sub { color: #536471; font-size: 14px; margin: 0 0 24px; }
-      .card {
-        background: #fff;
-        border: 1px solid #e1e8ed;
-        border-radius: 16px;
-        padding: 20px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
-      }
-      label { display: block; font-size: 13px; font-weight: 600; color: #536471; margin-bottom: 8px; }
-      .input-row { display: flex; gap: 8px; }
-      input[type="text"] {
-        flex: 1;
-        padding: 12px 14px;
-        font-size: 15px;
-        border: 1px solid #cfd9de;
-        border-radius: 9999px;
-        outline: none;
-      }
-      input[type="text"]:focus { border-color: #1d9bf0; }
-      button {
-        padding: 12px 20px;
-        font-size: 15px;
-        font-weight: 700;
-        color: #fff;
-        background: #1d9bf0;
-        border: none;
-        border-radius: 9999px;
-        cursor: pointer;
-      }
-      button:hover { background: #1a8cd8; }
-      button:disabled { opacity: 0.5; cursor: default; }
-      .status { font-size: 14px; margin-top: 12px; min-height: 20px; }
-      .status.error { color: #d93025; }
-      .result { margin-top: 20px; }
-      .tweet {
-        background: #fff;
-        border: 1px solid #e1e8ed;
-        border-radius: 16px;
-        padding: 18px;
-      }
-      .tweet-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-      .avatar {
-        width: 44px; height: 44px; border-radius: 50%;
-        background: #1d9bf0; color: #fff;
-        display: flex; align-items: center; justify-content: center;
-        font-weight: 700; font-size: 18px; flex-shrink: 0;
-        overflow: hidden;
-      }
-      .avatar img { width: 100%; height: 100%; object-fit: cover; }
-      .names { line-height: 1.3; }
-      .display-name { font-weight: 700; }
-      .handle { color: #536471; font-size: 13px; }
-      .body-text { font-size: 16px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
-      .meta { color: #536471; font-size: 13px; margin-top: 12px; border-top: 1px solid #eff3f4; padding-top: 10px; word-break: break-all; }
-      .actions { display: flex; gap: 8px; margin-top: 12px; }
-      .ghost {
-        background: transparent; color: #1d9bf0;
-        border: 1px solid #1d9bf0; font-weight: 600; font-size: 13px;
-        padding: 8px 14px;
-      }
-      .ghost:hover { background: rgba(29,155,240,0.1); }
-      .hidden { display: none; }
-      .spinner {
-        display: inline-block; width: 14px; height: 14px;
-        border: 2px solid #cfd9de; border-top-color: #1d9bf0;
-        border-radius: 50%; animation: spin 0.8s linear infinite;
-        vertical-align: -2px; margin-right: 6px;
-      }
-      @keyframes spin { to { transform: rotate(360deg); } }
-      .note { color: #536471; font-size: 12px; margin-top: 16px; line-height: 1.6; }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>🐦 ツイート本文取得ツール</h1>
-      <p class="sub">X（旧Twitter）の投稿リンクを貼ると、本文と投稿者情報を取得します。</p>
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>ツイート本文・プロフィール確認ツール</title>
+<style>
+  :root { font-family: "Hiragino Sans", "Noto Sans JP", system-ui, sans-serif; color: #0f1419; background: #f7f9fa; }
+  * { box-sizing: border-box; }
+  body { margin: 0; min-height: 100vh; background: linear-gradient(180deg,#f7f9fa 0%,#eef3f6 100%); display: flex; justify-content: center; padding: 40px 16px; }
+  main { width: 100%; max-width: 640px; }
+  h1 { font-size: 24px; margin: 0 0 4px; }
+  h2 { font-size: 16px; margin: 0 0 12px; }
+  .sub { color: #536471; font-size: 14px; margin: 0 0 24px; }
+  .card { background: #fff; border: 1px solid #e1e8ed; border-radius: 16px; padding: 20px; box-shadow: 0 2px 8px rgba(0,0,0,.04); margin-bottom: 20px; }
+  label { display: block; font-size: 13px; font-weight: 600; color: #536471; margin-bottom: 8px; }
+  .input-row { display: flex; gap: 8px; }
+  input[type="text"] { flex: 1; padding: 12px 14px; font-size: 15px; border: 1px solid #cfd9de; border-radius: 9999px; outline: none; min-width: 0; }
+  input[type="text"]:focus { border-color: #1d9bf0; }
+  button { padding: 12px 20px; font-size: 15px; font-weight: 700; color: #fff; background: #1d9bf0; border: none; border-radius: 9999px; cursor: pointer; white-space: nowrap; }
+  button:hover { background: #1a8cd8; }
+  button:disabled { opacity: .5; cursor: default; }
+  .status { font-size: 14px; margin-top: 12px; min-height: 20px; }
+  .status.error { color: #d93025; }
+  .tweet { border: 1px solid #e1e8ed; border-radius: 16px; padding: 18px; margin-top: 4px; }
+  .tweet-head { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+  .avatar { width: 44px; height: 44px; border-radius: 50%; background: #1d9bf0; color: #fff; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; flex-shrink: 0; }
+  .names { line-height: 1.3; }
+  .display-name { font-weight: 700; }
+  .handle { color: #536471; font-size: 13px; }
+  .body-text { font-size: 16px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+  .meta { color: #536471; font-size: 13px; margin-top: 12px; border-top: 1px solid #eff3f4; padding-top: 10px; word-break: break-all; }
+  .actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+  .ghost { background: transparent; color: #1d9bf0; border: 1px solid #1d9bf0; font-weight: 600; font-size: 13px; padding: 8px 14px; text-decoration: none; display: inline-block; border-radius: 9999px; }
+  .ghost:hover { background: rgba(29,155,240,.1); }
+  .hidden { display: none; }
+  .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid #cfd9de; border-top-color: #1d9bf0; border-radius: 50%; animation: spin .8s linear infinite; vertical-align: -2px; margin-right: 6px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .note { color: #536471; font-size: 12px; margin-top: 16px; line-height: 1.6; }
+  #timelineBox { margin-top: 16px; min-height: 40px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>ツイート本文・プロフィール確認ツール</h1>
+  <p class="sub">投稿のリンクから本文を取得し、ユーザーIDからプロフィールと最近の投稿を確認できます。</p>
 
-      <div class="card">
-        <label for="url">投稿URL（例: https://x.com/user/status/1234567890）</label>
-        <div class="input-row">
-          <input type="text" id="url" placeholder="https://x.com/.../status/..." />
-          <button id="fetchBtn">取得</button>
-        </div>
-        <div class="status" id="status"></div>
-      </div>
+  <div class="card">
+    <h2>1. 投稿から本文を取得</h2>
+    <label for="url">投稿URL（例: https://x.com/user/status/1234567890）</label>
+    <div class="input-row">
+      <input type="text" id="url" placeholder="https://x.com/.../status/..." />
+      <button id="fetchBtn">取得</button>
+    </div>
+    <div class="status" id="status"></div>
 
-      <div class="result hidden" id="result">
-        <div class="tweet">
-          <div class="tweet-head">
-            <div class="avatar" id="avatar">?</div>
-            <div class="names">
-              <div class="display-name" id="displayName">-</div>
-              <div class="handle" id="handle">-</div>
-            </div>
-          </div>
-          <div class="body-text" id="tweetText"></div>
-          <div class="meta" id="tweetMeta"></div>
-          <div class="actions">
-            <button class="ghost" id="copyBtn">本文をコピー</button>
-            <button class="ghost" id="copyUrlBtn">正規URLをコピー</button>
+    <div class="hidden" id="result">
+      <div class="tweet">
+        <div class="tweet-head">
+          <div class="avatar" id="avatar">?</div>
+          <div class="names">
+            <div class="display-name" id="displayName">-</div>
+            <div class="handle" id="handle">-</div>
           </div>
         </div>
+        <div class="body-text" id="tweetText"></div>
+        <div class="meta" id="tweetMeta"></div>
+        <div class="actions">
+          <button class="ghost" id="copyBtn">本文をコピー</button>
+          <button class="ghost" id="copyUrlBtn">正規URLをコピー</button>
+          <button class="ghost" id="toProfileBtn">この投稿者のプロフィールを見る</button>
+        </div>
       </div>
+    </div>
+  </div>
 
-      <p class="note">
-        ※ Xの公開oEmbed APIを使用しています。削除された投稿や非公開アカウントの投稿は取得できません。
-        画像・動画のURLは本文から取り除いて表示しています。
-      </p>
-    </main>
+  <div class="card">
+    <h2>2. ユーザーIDからプロフィールを確認</h2>
+    <label for="uid">ユーザーID（@は付けても付けなくても可）</label>
+    <div class="input-row">
+      <input type="text" id="uid" placeholder="例: NASA" />
+      <button id="profileBtn">表示</button>
+    </div>
+    <div class="status" id="pstatus"></div>
+    <div class="actions hidden" id="profileLinks">
+      <a class="ghost" id="profileLink" href="#" target="_blank" rel="noopener">Xでプロフィールを開く</a>
+    </div>
+    <div id="timelineBox"></div>
+  </div>
 
-    <script>
-      var urlInput = document.getElementById("url");
-      var fetchBtn = document.getElementById("fetchBtn");
-      var statusEl = document.getElementById("status");
-      var resultEl = document.getElementById("result");
-      var tweetTextEl = document.getElementById("tweetText");
-      var displayNameEl = document.getElementById("displayName");
-      var handleEl = document.getElementById("handle");
-      var avatarEl = document.getElementById("avatar");
-      var tweetMetaEl = document.getElementById("tweetMeta");
-      var copyBtn = document.getElementById("copyBtn");
-      var copyUrlBtn = document.getElementById("copyUrlBtn");
-      var currentText = "";
-      var currentUrl = "";
+  <p class="note">
+    ※ Xの公開oEmbed APIと埋め込み機能を使用しています。削除された投稿や非公開アカウントは表示できません。<br>
+    ※ 埋め込み一覧はXの仕様変更により、アカウントによっては空欄や「読み込めません」と表示される場合があります。その際は「Xでプロフィールを開く」をご利用ください。<br>
+    ※ 外部サイトとの通信が必要なため、ダウンロードしてブラウザで直接開いてください。
+  </p>
+</main>
 
-      function copyToClipboard(text, btn, originalLabel) {
-        if (!text) return;
-        var done = function () {
-          btn.textContent = "コピーしました！";
-          setTimeout(function () { btn.textContent = originalLabel; }, 1500);
-        };
-        if (navigator.clipboard && navigator.clipboard.writeText) {
-          navigator.clipboard.writeText(text).then(done);
-        } else {
-          var ta = document.createElement("textarea");
-          ta.value = text;
-          document.body.appendChild(ta);
-          ta.select();
-          document.execCommand("copy");
-          ta.remove();
-          done();
-        }
+<script>
+  var $ = function (id) { return document.getElementById(id); };
+  var currentText = "", currentUrl = "", currentHandle = "";
+
+  function copyToClipboard(text, btn, label) {
+    if (!text) return;
+    var done = function () { btn.textContent = "コピーしました"; setTimeout(function () { btn.textContent = label; }, 1500); };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done);
+    } else {
+      var ta = document.createElement("textarea");
+      ta.value = text; document.body.appendChild(ta); ta.select();
+      document.execCommand("copy"); ta.remove(); done();
+    }
+  }
+
+  function setStatus(el, msg, isError, loading) {
+    el.className = "status" + (isError ? " error" : "");
+    el.innerHTML = (loading ? '<span class="spinner"></span>' : "") + msg;
+  }
+
+  function extractTweetId(raw) {
+    var m = raw.match(/(?:twitter\.com|x\.com)\/(?:#!\/)?[^/]+\/status(?:es)?\/(\d+)/i);
+    return m ? m[1] : null;
+  }
+
+  function htmlToText(html) {
+    var div = document.createElement("div");
+    div.innerHTML = html;
+    div.querySelectorAll("img, video, iframe").forEach(function (el) { el.remove(); });
+    var text = (div.textContent || "").replace(/\s*\n\s*/g, "\n").trim();
+    return text.replace(/https?:\/\/\S+$/g, "").trim();
+  }
+
+  function fetchTweet() {
+    var tweetId = extractTweetId($("url").value.trim());
+    if (!tweetId) {
+      setStatus($("status"), "有効な投稿URLではありません。x.com または twitter.com の投稿リンクを貼ってください。", true, false);
+      return;
+    }
+    $("fetchBtn").disabled = true;
+    $("result").classList.add("hidden");
+    setStatus($("status"), "取得中…", false, true);
+
+    fetch("https://publish.twitter.com/oembed?url=https://x.com/i/status/" + tweetId + "&omit_script=1&dnt=true")
+      .then(function (res) {
+        if (!res.ok) throw new Error(res.status === 404 || res.status === 403
+          ? "投稿が見つかりません。削除済み、非公開、またはURLが正しくない可能性があります。"
+          : "取得に失敗しました（HTTP " + res.status + "）。");
+        return res.json();
+      })
+      .then(function (data) {
+        currentText = htmlToText(data.html || "");
+        currentUrl = data.url || ("https://x.com/i/status/" + tweetId);
+        currentHandle = data.author_url ? data.author_url.split("/").pop() : "";
+        var author = data.author_name || "不明なユーザー";
+        $("displayName").textContent = author;
+        $("handle").textContent = currentHandle ? "@" + currentHandle : "";
+        $("avatar").textContent = (author[0] || "?").toUpperCase();
+        $("tweetText").textContent = currentText || "（本文を取得できませんでした）";
+        $("tweetMeta").textContent = "正規URL: " + currentUrl;
+        $("toProfileBtn").classList.toggle("hidden", !currentHandle);
+        $("result").classList.remove("hidden");
+        setStatus($("status"), "取得しました。", false, false);
+      })
+      .catch(function (err) {
+        setStatus($("status"), (err && err.message) || "取得に失敗しました。ネットワーク設定を確認してください。", true, false);
+      })
+      .finally(function () { $("fetchBtn").disabled = false; });
+  }
+
+  // ---- プロフィール・埋め込み一覧 ----
+  var widgetsPromise = null;
+  function loadWidgets() {
+    if (widgetsPromise) return widgetsPromise;
+    widgetsPromise = new Promise(function (resolve, reject) {
+      var s = document.createElement("script");
+      s.src = "https://platform.twitter.com/widgets.js";
+      s.async = true;
+      s.onload = function () { resolve(window.twttr); };
+      s.onerror = function () { widgetsPromise = null; reject(new Error("widgets.js")); };
+      document.head.appendChild(s);
+    });
+    return widgetsPromise;
+  }
+
+  function showProfile() {
+    var id = $("uid").value.trim().replace(/^@/, "");
+    if (!/^[A-Za-z0-9_]{1,15}$/.test(id)) {
+      setStatus($("pstatus"), "ユーザーIDは半角英数字とアンダーバーのみ、15文字以内で入力してください。", true, false);
+      return;
+    }
+    var link = "https://x.com/" + id;
+    $("profileLink").href = link;
+    $("profileLinks").classList.remove("hidden");
+    $("timelineBox").innerHTML = "";
+    setStatus($("pstatus"), "読み込み中…（数秒かかる場合があります）", false, true);
+
+    loadWidgets().then(function (twttr) {
+      return twttr.widgets.createTimeline(
+        { sourceType: "profile", screenName: id },
+        $("timelineBox"),
+        { height: 600, dnt: true, lang: "ja" }
+      );
+    }).then(function (el) {
+      if (el) {
+        setStatus($("pstatus"), "表示しました。空欄の場合は、上の「Xでプロフィールを開く」をご利用ください。", false, false);
+      } else {
+        setStatus($("pstatus"), "埋め込み一覧を表示できませんでした。アカウントが存在しないか、非公開の可能性があります。", true, false);
       }
+    }).catch(function () {
+      setStatus($("pstatus"), "埋め込み機能を読み込めませんでした。ブラウザで直接開いているか、広告ブロックなどが無効か確認してください。", true, false);
+    });
+  }
 
-      function extractTweetId(raw) {
-        var m = raw.match(/(?:twitter\.com|x\.com)\/(?:#!\/)?[^/]+\/status(?:es)?\/(\d+)/i);
-        return m ? m[1] : null;
-      }
-
-      function setStatus(msg, isError, loading) {
-        statusEl.className = "status" + (isError ? " error" : "");
-        statusEl.innerHTML = (loading ? '<span class="spinner"></span>' : "") + msg;
-      }
-
-      function htmlToText(html) {
-        var div = document.createElement("div");
-        div.innerHTML = html;
-        // 埋め込み画像・動画などは本文から除外
-        div.querySelectorAll("img, video, iframe, .twitter-timeline").forEach(function (el) { el.remove(); });
-        var text = (div.textContent || "").replace(/\s*\n\s*/g, "\n").trim();
-        // 末尾のURLを除去（リンクカード分）
-        text = text.replace(/https?:\/\/\S+$/g, "").trim();
-        return text;
-      }
-
-      function fetchTweet() {
-        var raw = urlInput.value.trim();
-        var tweetId = extractTweetId(raw);
-        if (!tweetId) {
-          setStatus("有効なツイートURLではありません。x.com または twitter.com の投稿リンクを貼ってください。", true, false);
-          return;
-        }
-        fetchBtn.disabled = true;
-        resultEl.classList.add("hidden");
-        setStatus("取得中…", false, true);
-
-        var apiUrl = "https://publish.twitter.com/oembed?url=https://x.com/i/status/" + tweetId +
-          "&omit_script=1&dnt=true";
-
-        fetch(apiUrl)
-          .then(function (res) {
-            if (!res.ok) {
-              throw new Error(res.status === 404 || res.status === 403
-                ? "投稿が見つかりません。削除済み、非公開、またはURLが正しくない可能性があります。"
-                : "取得に失敗しました（HTTP " + res.status + "）。");
-            }
-            return res.json();
-          })
-          .then(function (data) {
-            currentText = htmlToText(data.html || "");
-            currentUrl = data.url || ("https://x.com/i/status/" + tweetId);
-            var author = data.author_name || "不明なユーザー";
-            displayNameEl.textContent = author;
-            handleEl.textContent = data.author_url ? "@" + data.author_url.split("/").pop() : "";
-            avatarEl.textContent = (author[0] || "?").toUpperCase();
-            tweetTextEl.textContent = currentText || "（本文を取得できませんでした）";
-            tweetMetaEl.textContent = "正規URL: " + currentUrl;
-            resultEl.classList.remove("hidden");
-            setStatus("取得しました。", false, false);
-          })
-          .catch(function (err) {
-            var msg = err && err.message ? err.message : "取得に失敗しました。ネットワークまたはCSP設定を確認してください。";
-            if (location.protocol === "about:" || window !== window.top) {
-              msg += "（プレビュー環境では外部APIへのアクセスがブロックされる場合があります。ダウンロードしてブラウザで開くと確実に動作します。）";
-            }
-            setStatus(msg, true, false);
-          })
-          .finally(function () {
-            fetchBtn.disabled = false;
-          });
-      }
-
-      copyBtn.addEventListener("click", function () {
-        copyToClipboard(currentText, copyBtn, "本文をコピー");
-      });
-      copyUrlBtn.addEventListener("click", function () {
-        copyToClipboard(currentUrl, copyUrlBtn, "正規URLをコピー");
-      });
-
-      fetchBtn.addEventListener("click", fetchTweet);
-      urlInput.addEventListener("keydown", function (e) {
-        if (e.key === "Enter") fetchTweet();
-      });
-    </script>
-  </body>
+  $("copyBtn").addEventListener("click", function () { copyToClipboard(currentText, $("copyBtn"), "本文をコピー"); });
+  $("copyUrlBtn").addEventListener("click", function () { copyToClipboard(currentUrl, $("copyUrlBtn"), "正規URLをコピー"); });
+  $("toProfileBtn").addEventListener("click", function () {
+    $("uid").value = currentHandle;
+    showProfile();
+    $("uid").scrollIntoView({ behavior: "smooth", block: "center" });
+  });
+  $("fetchBtn").addEventListener("click", fetchTweet);
+  $("url").addEventListener("keydown", function (e) { if (e.key === "Enter") fetchTweet(); });
+  $("profileBtn").addEventListener("click", showProfile);
+  $("uid").addEventListener("keydown", function (e) { if (e.key === "Enter") showProfile(); });
+</script>
+</body>
 </html>
